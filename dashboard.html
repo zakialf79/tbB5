@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Tugas Besar Web</title>
+    <style>
+        /* Pengaturan Dasar */
+        body {
+            background-color: #f1f5f9; /* Background utama abu-abu terang bersih */
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 280px 1fr; /* Membagi layar jadi Kiri (280px) dan Kanan (Sisa layar) */
+            min-height: 100vh;
+        }
+
+        /* --- SIDEBAR KIRI --- */
+        .sidebar {
+            background-color: #0f172a; /* Biru gelap pekat solid */
+            color: #ffffff;
+            padding: 40px 24px;
+            box-sizing: border-box;
+        }
+        .sidebar h4 {
+            color: #10b981; /* Hijau cerah kontras tinggi */
+            font-size: 22px;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 40px;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar li {
+            margin-bottom: 16px;
+        }
+        .sidebar a {
+            display: block;
+            color: #94a3b8; /* Teks abu-abu terang agar tidak menusuk mata */
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        /* Menu yang aktif */
+        .sidebar a.active {
+            background-color: #1e293b; /* Kotak penanda menu aktif */
+            color: #ffffff; /* Huruf jadi putih tegas */
+        }
+        .sidebar a:hover:not(.active) {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+
+        /* --- KONTEN UTAMA KANAN --- */
+        .main-content {
+            padding: 50px;
+            box-sizing: border-box;
+        }
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        .header-area h2 {
+            color: #0f172a;
+            font-size: 32px; /* Huruf diperbesar biar gagah */
+            font-weight: 800;
+            margin: 0 0 8px 0;
+        }
+        .header-area p {
+            color: #64748b;
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        /* Tombol Logout Gede & Tegas */
+        .btn-logout {
+            background-color: #ef4444; /* Merah solid */
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+        }
+        .btn-logout:hover {
+            background-color: #dc2626;
+        }
+
+        /* --- KARTU UTAMA DATA SERVER --- */
+        .main-card {
+            background: #ffffff; /* Putih bersih */
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Bayangan halus */
+            box-sizing: border-box;
+        }
+        .main-card h3 {
+            color: #1e3a8a; /* Biru gelap formal */
+            font-size: 24px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        /* Kotak Isian Pesan Rahasia dari Server */
+        .box-pesan-server {
+            background-color: #f8fafc;
+            border-left: 6px solid #0022ff; /* Garis penanda biru tegas */
+            padding: 24px;
+            border-radius: 8px;
+            font-size: 18px; /* Ukuran font respons server diperbesar */
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        /* Label Status Sukses Hijau */
+        .status-badge {
+            display: inline-block;
+            background-color: #d1fae5;
+            color: #065f46;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 8px;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h4>PWEB Project 2026</h4>
+        <ul>
+            <li><a href="#" class="active">🏠 Dashboard Admin</a></li>
+            <li><a href="#">👥 Manajemen User</a></li>
+            <li><a href="#">⚙️ Pengaturan ACL</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="header-area">
+            <div>
+                <h2>Ruang Kendali Utama 🚀</h2>
+                <p>Selamat datang kembali, Paduka Admin Zaki!</p>
+            </div>
+            <button onclick="logout()" class="btn-logout">Logout 🚪</button>
+        </div>
+
+        <div class="main-card">
+            <h3>Pesan Rahasia dari Server Backend:</h3>
+            
+            <div id="pesanServer" class="box-pesan-server">
+                Sedang memeriksa tiket token Anda... 🔍
+            </div>
+
+            <div class="status-badge">
+                ✅ STATUS AUTENTIKASI: TOKEN JWT VALID
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function ambilDataRahasia() {
+            const token = localStorage.getItem('tiket_token');
+
+            if (!token) {
+                alert("Akses ditolak! Anda tidak punya tiket token.");
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const respon = await fetch('http://localhost:3000/dashboard-admin', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                const hasil = await respon.json();
+
+                if (respon.ok) {
+                    document.getElementById('pesanServer').innerHTML = `🟢 <strong>Server Mengatakan:</strong> "${hasil.pesan}"`;
+                } else {
+                    alert("Akses Ditolak: " + hasil.pesan);
+                    localStorage.removeItem('tiket_token');
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                document.getElementById('pesanServer').innerText = "Gagal terhubung ke server backend!";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('tiket_token');
+            window.location.href = 'login.html';
+        }
+
+        ambilDataRahasia();
+    </script>
+</body>
+</html>

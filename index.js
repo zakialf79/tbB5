@@ -2,11 +2,13 @@ const express = require('express');
 const mysql = require('mysql2'); 
 const bcrypt = require('bcryptjs'); 
 const jwt = require('jsonwebtoken'); 
+const cors = require('cors'); // <--- PINTU TOL SUDAH DIKEMAS DI SINI
 
 const app = express();
 const port = 3000;
 const KUNCI_RAHASIA = 'kunci_rahasia_pongo_123'; 
 
+app.use(cors()); // <--- SEKARANG FRONTEND SUDAH DIIZINKAN MASUK REK!
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -29,24 +31,22 @@ db.connect((err) => {
 // 1. Satpam Pengecek Tiket
 const verifikasiToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  // Bentuk token nanti "Bearer eyJhbG...", jadi kita ambil kata keduanya saja
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) return res.status(401).json({ pesan: 'Akses ditolak! Tiketnya mana?' });
 
   jwt.verify(token, KUNCI_RAHASIA, (err, decoded) => {
     if (err) return res.status(403).json({ pesan: 'Tiket tidak valid atau kadaluwarsa!' });
-    req.user = decoded; // Simpan data user ke dalam request
-    next(); // Silakan masuk!
+    req.user = decoded; 
+    next(); 
   });
 };
 
 // 2. Satpam Pengecek Jabatan (Role)
 const cekRole = (roleYangDiizinkan) => {
   return (req, res, next) => {
-    // Ingat, waktu register kita kasih role_id = 1 (Admin)
     if (req.user.role_id === roleYangDiizinkan) {
-      next(); // Jabatan sesuai, silakan lewat!
+      next(); 
     } else {
       res.status(403).json({ pesan: 'Akses ditolak! Kamu bukan Admin!' });
     }
@@ -91,7 +91,6 @@ app.post('/login', (req, res) => {
 });
 
 // --- RUTE RAHASIA (TES ACL) ---
-// Rute ini dipasangkan Satpam verifikasiToken DAN cekRole(1)
 app.get('/dashboard-admin', verifikasiToken, cekRole(1), (req, res) => {
   res.json({ pesan: 'Selamat datang, Paduka Admin! Ini ruang rahasia.' });
 });

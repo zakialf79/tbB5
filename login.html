@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Modern - Tugas Besar Web</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-ui/dist/basecoat.min.css">
+    <style>
+        /* Mengunci posisi layar di tengah sempurna */
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+        }
+        /* Box login dibuat lebih besar, lega, dan simetris */
+        .card-login {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 460px; /* Diperbesar dari sebelumnya agar tidak kaku */
+            padding: 40px; /* Spasi dalam dibuat lebih longgar */
+            box-sizing: border-box;
+        }
+        /* Penyesuaian agar komponen input mengisi box dengan rapi */
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+        .input-custom {
+            width: 100% !important;
+            padding: 14px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            font-size: 15px !important;
+            background-color: #f8fafc !important;
+            box-sizing: border-box;
+        }
+        .input-custom:focus {
+            border-color: #3b82f6 !important;
+            background-color: #ffffff !important;
+            outline: none;
+        }
+        /* Tombol login disesuaikan ukurannya */
+        .btn-luncurkan {
+            width: 100% !important;
+            padding: 14px !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            border-radius: 8px !important;
+            background-color: #0022ff !important;
+            color: white !important;
+            border: none !important;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 34, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .btn-luncurkan:hover {
+            background-color: #001bcc !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-login">
+        <h2 class="text-dark font-bold mb-1" style="font-size: 28px;">Selamat Datang</h2>
+        <p class="text-muted small mb-5" style="font-size: 14px;">Silakan masuk ke akun Tugas Besar Anda</p>
+        
+        <form id="formLogin">
+            <div class="form-group">
+                <label>EMAIL</label>
+                 <input type="email" id="email" class="input-custom" placeholder="Masukkan alamat email Anda" required>
+    </div>
+
+<div class="form-group">
+    <label>PASSWORD</label>
+    <input type="password" id="password" class="input-custom" placeholder="Masukkan password Anda" required>
+</div>
+            
+            <button type="submit" class="btn-luncurkan">
+                Login Uhuu! 🚀
+            </button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('formLogin').addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+            const emailUser = document.getElementById('email').value;
+            const passwordUser = document.getElementById('password').value;
+
+            try {
+                const respon = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailUser, password: passwordUser })
+                });
+
+                const hasil = await respon.json();
+
+                if (respon.ok) {
+                    localStorage.setItem('tiket_token', hasil.tiket_token);
+                    alert("Uhuuu! Berhasil Login, Dialihkan...");
+                    window.location.href = 'dashboard.html'; 
+                } else {
+                    alert("Gagal: " + hasil.pesan);
+                }
+            } catch (error) {
+                alert("Mesin servernya mati atau belum dinyalakan!");
+            }
+        });
+    </script>
+</body>
+</html>

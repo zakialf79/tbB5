@@ -1,19 +1,13 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'db_tugas_auth'
+const pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '', 
+    database: 'facultyware', 
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-// Menghubungkan koneksi ke database MySQL
-db.connect((err) => {
-  if (err) {
-    console.error('Koneksi database gagal:', err);
-  } else {
-    console.log('Database MySQL berhasil terhubung.');
-  }
-});
-
-module.exports = db;
+module.exports = pool;

@@ -8,6 +8,8 @@ var MySQLStore = require('express-mysql-session')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var reimburseRouter = require('./routes/reimburse');
+var laporanRouter = require('./routes/laporan');
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
 
 var app = express();
@@ -43,6 +45,8 @@ app.use(session({
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/reimburse', reimburseRouter);
+app.use('/laporan', laporanRouter);
 
 // catch 404 and forward to error handler
 app.use(notFoundHandler);

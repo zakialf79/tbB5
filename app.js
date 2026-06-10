@@ -43,6 +43,7 @@ app.use(session({
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/', require('./routes/perjalananDinas'));
 
 // catch 404 and forward to error handler
 app.use(notFoundHandler);

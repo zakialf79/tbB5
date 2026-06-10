@@ -1,18 +1,28 @@
 const authMiddleware = (req, res, next) => {
+    const userId = req.headers['user-id'] || 1;
+    const userRole = req.headers['role'] || 'Pegawai';
+    const userRoleId = req.headers['role-id'] || 1;
+
+    req.user = {
+        id: parseInt(userId),
+        role: userRole,
+        roleId: parseInt(userRoleId)
+    };
+
     next();
 };
 
-// Tambahan fungsi bypass untuk mendamaikan rute milik Zaki
 const verifikasiToken = (req, res, next) => {
-    next();
+    authMiddleware(req, res, next);
 };
 
 const checkRole = (allowedRoles) => {
     return (req, res, next) => {
-        const userRole = req.headers['role'] || 'Pegawai'; 
-        const userId = req.headers['user-id'] || 1; 
-
-        req.user = { id: parseInt(userId), role: userRole };
+        if (!req.user) {
+            const userRole = req.headers['role'] || 'Pegawai';
+            const userId = req.headers['user-id'] || 1;
+            req.user = { id: parseInt(userId), role: userRole };
+        }
 
         if (!allowedRoles.includes(req.user.role)) {
             return res.status(403).json({ 
@@ -26,7 +36,7 @@ const checkRole = (allowedRoles) => {
 
 const cekRole = (roleId) => {
     return (req, res, next) => {
-        const userRoleId = req.headers['role-id'] || 1; 
+        const userRoleId = req.user ? req.user.roleId : (req.headers['role-id'] || 1);
 
         if (parseInt(userRoleId) !== parseInt(roleId)) {
             return res.status(403).json({ 
@@ -38,5 +48,4 @@ const cekRole = (roleId) => {
     };
 };
 
-// Pastikan verifikasiToken ikut diekspor di sini
 module.exports = { authMiddleware, verifikasiToken, checkRole, cekRole };

@@ -1,9 +1,15 @@
 const db = require('../config/db');
 
 const convertToCSV = (data) => {
-    if (data.length === 0) return '';
+    if (!data || data.length === 0) return '';
     const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(row => Object.values(row).map(val => `"${val}"`).join(','));
+    const rows = data.map(row => 
+        Object.values(row).map(val => {
+            if (val === null || val === undefined) return '""';
+            const cleanVal = String(val).replace(/"/g, '""');
+            return `"${cleanVal}"`;
+        }).join(',')
+    );
     return [headers, ...rows].join('\n');
 };
 

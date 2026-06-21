@@ -8,6 +8,8 @@ var MySQLStore = require('express-mysql-session')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+// 👇 INI TAMBAHANMU: Import route reimburse
+var reimburseRoutes = require('./routes/reimburseRoutes'); 
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
 
 var app = express();
@@ -21,6 +23,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 👇 INI TAMBAHANMU: Membuka akses folder statis untuk file nota (multer)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Session configuration
 const sessionStore = new MySQLStore({
@@ -44,6 +49,9 @@ app.use(session({
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/', require('./routes/perjalananDinas'));
+
+// 👇 INI TAMBAHANMU: Daftarkan rute API reimburse
+app.use('/', reimburseRoutes);
 
 // catch 404 and forward to error handler
 app.use(notFoundHandler);

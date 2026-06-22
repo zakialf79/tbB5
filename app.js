@@ -8,6 +8,8 @@ var MySQLStore = require('express-mysql-session')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var reimburseRouter = require('./routes/reimburse');
+var laporanRouter = require('./routes/laporan');
 // 👇 INI TAMBAHANMU: Import route reimburse
 var reimburseRoutes = require('./routes/reimburseRoutes'); 
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
@@ -33,6 +35,14 @@ const sessionStore = new MySQLStore({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'id',
+      expires: 'last_activity',
+      data: 'payload'
+    }
+  }
 });
 
 app.use(session({
@@ -48,6 +58,8 @@ app.use(session({
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/reimburse', reimburseRouter);
+app.use('/laporan', laporanRouter);
 app.use('/', require('./routes/perjalananDinas'));
 
 // 👇 INI TAMBAHANMU: Daftarkan rute API reimburse

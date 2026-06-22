@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script>
+    (() => {
+      try {
+        const stored = localStorage.getItem("themeMode");
+        if (stored ? stored === "dark" : matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (_) {}
+      document.addEventListener("basecoat:theme", (event) => {
+        const mode = event.detail?.mode;
+        const dark = mode === "dark" ? true : mode === "light" ? false : !document.documentElement.classList.contains("dark");
+        document.documentElement.classList.toggle("dark", dark);
+        try { localStorage.setItem("themeMode", dark ? "dark" : "light"); } catch (_) {}
+      });
+    })();
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title><%= title %> - FacultyWare</title>
+  <link rel="stylesheet" href="/assets/styles.css" />
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar" data-side="left" aria-hidden="false">
+    <nav aria-label="Sidebar navigation">
+      <header>
+        <a href="/home" class="btn-ghost p-2 h-12 w-full justify-start">
+          <div class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" class="h-4 w-4">
+              <rect width="256" height="256" fill="none"></rect>
+              <line x1="208" y1="128" x2="128" y2="208" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"></line>
+              <line x1="192" y1="40" x2="40" y2="192" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"></line>
+            </svg>
+          </div>
+          <div class="grid flex-1 text-left text-sm leading-tight">
+            <span class="truncate font-medium">FacultyWare</span>
+            <span class="truncate text-xs">Sistem Informasi</span>
+          </div>
+        </a>
+      </header>
+      <section class="scrollbar">
+        <div role="group" aria-labelledby="group-perjalanan">
+          <h3 id="group-perjalanan">Perjalanan Dinas</h3>
+          <ul>
+            <li>
+              <a href="/reimburse">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/>
+                  <line x1="2" x2="22" y1="10" y2="10"/>
+                </svg>
+                <span>Reimburse</span>
+              </a>
+            </li>
+            <li>
+              <a href="/laporan">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <span>Laporan Perjalanan</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </section>
+      <footer>
+        <a href="/logout" class="btn-ghost p-2 h-12 w-full justify-start">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" x2="9" y1="12" y2="12"/>
+          </svg>
+          <span>Logout</span>
+        </a>
+      </footer>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main id="content">
+    <header class="bg-background sticky inset-x-0 top-0 isolate flex shrink-0 items-center gap-2 border-b z-10">
+      <div class="flex h-14 w-full items-center gap-2 px-4">
+        <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))"
+          aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/>
+          </svg>
+        </button>
+        <span class="font-semibold text-sm">Ajukan Reimburse</span>
+        <div class="ml-auto flex items-center gap-2">
+          <span class="text-sm text-muted-foreground">Halo, <%= locals.username || 'Pegawai' %></span>
+          <a href="/logout" class="btn-sm-outline">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-4 md:p-6 max-w-2xl">
+
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+        <a href="/reimburse" class="hover:text-foreground">Reimburse</a>
+        <span>/</span>
+        <span class="text-foreground">Ajukan Baru</span>
+      </nav>
+
+      <!-- Error message -->
+      <% if (error) { %>
+        <div class="alert-destructive mb-4"><p><%= error %></p></div>
+      <% } %>
+
+      <!-- Form -->
+      <div class="card">
+        <header>
+          <h1 class="text-xl font-bold">Form Pengajuan Reimburse</h1>
+          <p class="text-muted-foreground text-sm">Isi data pengeluaran dan lampirkan bukti pembayaran.</p>
+        </header>
+
+        <section class="mt-4">
+          <form class="form grid gap-4" action="/reimburse" method="POST" enctype="multipart/form-data">
+
+            <!-- Pilih perjalanan dinas -->
+            <div class="grid gap-2">
+              <label for="official_travel_id">Perjalanan Dinas <span class="text-destructive">*</span></label>
+              <select name="official_travel_id" id="official_travel_id" class="w-full" required>
+                <option value="">-- Pilih Perjalanan Dinas --</option>
+                <% travels.forEach(function(t) { %>
+                  <option value="<%= t.id %>" <%= old.official_travel_id == t.id ? 'selected' : '' %>>
+                    <%= t.request_number %> — <%= t.destination %> (<%= t.purpose %>)
+                  </option>
+                <% }) %>
+              </select>
+              <% if (travels.length === 0) { %>
+                <p class="text-sm text-muted-foreground">Tidak ada perjalanan dinas yang tersedia.</p>
+              <% } %>
+            </div>
+
+            <!-- Komponen biaya -->
+            <div class="grid gap-2">
+              <label for="travel_cost_component_id">Komponen Biaya <span class="text-destructive">*</span></label>
+              <select name="travel_cost_component_id" id="travel_cost_component_id" class="w-full" required>
+                <option value="">-- Pilih Komponen --</option>
+                <% components.forEach(function(c) { %>
+                  <option value="<%= c.id %>" <%= old.travel_cost_component_id == c.id ? 'selected' : '' %>>
+                    <%= c.name %> (<%= c.code %>)
+                  </option>
+                <% }) %>
+              </select>
+            </div>
+
+            <!-- Jumlah biaya -->
+            <div class="grid gap-2">
+              <label for="amount">Jumlah Biaya (Rp) <span class="text-destructive">*</span></label>
+              <input
+                type="number"
+                name="amount"
+                id="amount"
+                min="1"
+                placeholder="Contoh: 500000"
+                value="<%= old.amount || '' %>"
+                class="input w-full"
+                required
+              />
+            </div>
+
+            <!-- Keterangan -->
+            <div class="grid gap-2">
+              <label for="description">Keterangan</label>
+              <textarea
+                name="description"
+                id="description"
+                rows="3"
+                placeholder="Contoh: Tiket pesawat PP Jakarta-Padang"
+                class="input w-full"
+              ><%= old.description || '' %></textarea>
+            </div>
+
+            <!-- Upload bukti -->
+            <div class="grid gap-2">
+              <label for="receipt_file">Bukti Pengeluaran <span class="text-destructive">*</span></label>
+              <input
+                type="file"
+                name="receipt_file"
+                id="receipt_file"
+                accept=".jpg,.jpeg,.png,.pdf"
+                class="input w-full"
+                required
+              />
+              <p class="text-xs text-muted-foreground">Format: JPG, PNG, atau PDF. Maksimal 2MB.</p>
+            </div>
+
+            <!-- Tombol -->
+            <div class="flex gap-2 mt-2">
+              <a href="/reimburse" class="btn-outline">Batal</a>
+              <button type="submit" class="btn">Ajukan Reimburse</button>
+            </div>
+
+          </form>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/assets/js/basecoat.js" defer></script>
+  <script src="/assets/js/sidebar.js" defer></script>
+</body>
+</html>

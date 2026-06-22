@@ -6,30 +6,30 @@ const checkPermission = (requiredPermissions) => {
       return res.status(401).redirect('/login');
     }
 
-    const permissionsArray = Array.isArray(requiredPermissions)
-      ? requiredPermissions
-      : [requiredPermissions];
-
     try {
-      const query = `
-        SELECT DISTINCT p.name
-        FROM permissions p
-        JOIN role_has_permissions rhp ON p.id = rhp.permission_id
-        JOIN model_has_roles mhr ON rhp.role_id = mhr.role_id
-        WHERE mhr.model_id = ?
-          AND mhr.model_type = 'App\\\\Models\\\\User'
-          AND p.name IN (?)
-      `;
+      const [rows] = await db.query(
+        'SELECT role FROM users WHERE id = ?',
+        [req.session.userId]
+      );
 
-      const [rows] = await db.query(query, [req.session.userId, permissionsArray]);
+      if (rows.length === 0) {
+        return res.status(403).render('error', {
+          message: 'Forbidden: User tidak ditemukan.',
+          error: { status: 403, stack: '' }
+        });
+      }
 
-      if (rows.length > 0) {
+      const userRole = rows[0].role;
+
+      // Pegawai boleh akses semua fitur reimburse & laporan
+      // Bisa dikembangkan lebih lanjut sesuai kebutuhan ACL
+      if (userRole === 'pegawai' || userRole === 'admin') {
         return next();
       }
 
-      return res.status(403).render("error", {
-        message: "Forbidden: Anda tidak memiliki akses ke halaman ini.",
-        error: { status: 403, stack: "" }
+      return res.status(403).render('error', {
+        message: 'Forbidden: Anda tidak memiliki akses ke halaman ini.',
+        error: { status: 403, stack: '' }
       });
     } catch (err) {
       next(err);

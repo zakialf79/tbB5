@@ -14,8 +14,12 @@ router.post('/api/reimburse', upload.single('receipt_file'), validateReimburse, 
 // Route update klaim + Validasi + Upload File Nota
 router.put('/api/reimburse/:id', upload.single('receipt_file'), validateReimburse, reimburseController.updateReimburse);
 
+// Route hapus dan persetujuan pimpinan
 router.delete('/api/reimburse/:id', reimburseController.deleteReimburse);
 router.post('/api/reimburse/approve/:id', reimburseController.approveReimburse);
+
+// Route Export & Import CSV
 router.get('/api/reimburse/export', reimburseController.exportToCSV);
+router.post('/api/reimburse/import', upload.single('csv_file'), reimburseController.importFromCSV);
 
 module.exports = router;

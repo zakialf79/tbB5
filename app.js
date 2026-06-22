@@ -8,7 +8,6 @@ var MySQLStore = require('express-mysql-session')(session);
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var reimburseRouter = require('./routes/reimburse');
 var laporanRouter = require('./routes/laporan');
 // 👇 INI TAMBAHANMU: Import route reimburse
 var reimburseRoutes = require('./routes/reimburseRoutes'); 
@@ -58,7 +57,6 @@ app.use(session({
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/reimburse', reimburseRouter);
 app.use('/laporan', laporanRouter);
 app.use('/', require('./routes/perjalananDinas'));
 

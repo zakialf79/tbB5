@@ -2,8 +2,9 @@ const db = require('../lib/db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const ExcelJS = require('exceljs');
 
-// Setup multer untuk upload lampiran laporan
+// Setup multer untuk upload lampiran laporan manual (Fitur 1 & 2)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadPath = path.join(__dirname, '../public/uploads/laporan');
@@ -41,7 +42,6 @@ const createForm = async (req, res, next) => {
     try {
         const employeeId = req.session.userId;
 
-        // Ambil perjalanan dinas yang diikuti pegawai dan belum ada laporannya
         const [travels] = await db.query(`
             SELECT ot.id, ot.request_number, ot.destination, ot.purpose,
                    ot.start_date, ot.end_date
@@ -93,7 +93,6 @@ const store = (req, res, next) => {
             const employeeId = req.session.userId;
             const { official_travel_id, summary, report_date } = req.body;
 
-            // Validasi server side
             const errors = [];
             if (!official_travel_id) errors.push('Perjalanan dinas wajib dipilih.');
             if (!summary || summary.trim() === '') errors.push('Isi laporan wajib diisi.');
@@ -120,7 +119,6 @@ const store = (req, res, next) => {
 
             const attachment = req.file ? req.file.filename : null;
 
-            // Update baris di official_travel_members milik pegawai ini
             await db.query(`
                 UPDATE official_travel_members
                 SET summary = ?, report_date = ?, attachment = ?, updated_at = NOW()
@@ -205,7 +203,6 @@ const editForm = async (req, res, next) => {
             });
         }
 
-        // Cek batas waktu — hanya bisa edit jika end_date belum lewat 7 hari
         const laporan = rows[0];
         const endDate = new Date(laporan.end_date);
         const deadline = new Date(endDate);
@@ -244,7 +241,6 @@ const update = (req, res, next) => {
             const { id } = req.params;
             const { summary, report_date } = req.body;
 
-            // Ambil data laporan dulu untuk cek kepemilikan & deadline
             const [rows] = await db.query(`
                 SELECT otm.id, otm.attachment, ot.end_date
                 FROM official_travel_members otm
@@ -271,7 +267,6 @@ const update = (req, res, next) => {
                 });
             }
 
-            // Validasi
             const errors = [];
             if (!summary || summary.trim() === '') errors.push('Isi laporan wajib diisi.');
             if (!report_date) errors.push('Tanggal laporan wajib diisi.');
@@ -280,7 +275,6 @@ const update = (req, res, next) => {
                 return res.status(400).redirect('back');
             }
 
-            // Jika ada file baru, hapus file lama
             let attachment = laporan.attachment;
             if (req.file) {
                 if (attachment) {
@@ -303,4 +297,216 @@ const update = (req, res, next) => {
     });
 };
 
-module.exports = { index, createForm, store, editForm, update, uploadAttachment };
+// =============================================
+// FITUR 5 - Export laporan ke Excel
+// =============================================
+const exportExcel = async (req, res, next) => {
+    try {
+        const employeeId = req.session.userId;
+        const [rows] = await db.query(` 
+            SELECT
+                otm.id, otm.summary, otm.report_date, otm.attachment, otm.role,
+                ot.request_number, ot.destination, ot.purpose,
+                ot.start_date, ot.end_date, ot.status AS travel_status
+            FROM official_travel_members otm
+            JOIN official_travel ot ON otm.official_travel_id = ot.id
+            WHERE otm.employee_id = ?
+                AND otm.summary IS NOT NULL AND otm.summary != ''
+            ORDER BY otm.report_date DESC
+        `, [employeeId]);
+
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'FacultyWare';
+        workbook.created = new Date();
+
+        const worksheet = workbook.addWorksheet('Laporan Perjalanan Dinas');
+
+        worksheet.columns = [
+            { header: 'No', key: 'no', width: 5 },
+            { header: 'No. Surat', key: 'request_number', width: 20 },
+            { header: 'Tujuan', key: 'destination', width: 20 },
+            { header: 'Keperluan', key: 'purpose', width: 25 },
+            { header: 'Tanggal Mulai', key: 'start_date', width: 15 },
+            { header: 'Tanggal Selesai', key: 'end_date', width: 15 },
+            { header: 'Tanggal Laporan', key: 'report_date', width: 15 },
+            { header: 'Role', key: 'role', width: 15 },
+            { header: 'Isi Laporan', key: 'summary', width: 40 },
+            { header: 'Status Perjalanan', key: 'travel_status', width: 18 }
+        ];
+
+        worksheet.getRow(1).eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+            cell.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FF2563EB' }
+            };
+            cell.alignment = { horizontal: 'center', vertical: 'middle' };
+            cell.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        });
+
+        rows.forEach((r, i) => {
+            worksheet.addRow({
+                no: i + 1,
+                request_number: r.request_number,
+                destination: r.destination,
+                purpose: r.purpose,
+                start_date: r.start_date ? new Date(r.start_date).toLocaleDateString('id-ID') : '-',
+                end_date: r.end_date ? new Date(r.end_date).toLocaleDateString('id-ID') : '-',
+                report_date: r.report_date ? new Date(r.report_date).toLocaleDateString('id-ID') : '-',
+                role: r.role || '-',
+                summary: r.summary,
+                travel_status: r.travel_status,
+            });
+        });
+
+        worksheet.eachRow((row, rowNumber) => {
+            if (rowNumber > 1) {
+                row.eachCell((cell) => {
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                    cell.alignment = { wrapText: true, vertical: 'middle' };
+                });
+            }
+        });
+
+        const filename = `laporan_perjalanan_${Date.now()}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (err) {
+        next(err);
+    }   
+};
+
+// =============================================
+// FITUR 5 - Form import laporan (Tampilan)
+// =============================================
+const importForm = async (req, res, next) => {
+    try {
+        res.render('laporan/import', {
+            title: 'Import Laporan Perjalanan Dinas',
+            error: null,
+            success: null
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// =============================================
+// FITUR 5 - Proses import laporan dari Excel
+// =============================================
+const multerImport = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext === '.xlsx') {
+            cb(null, true);
+        } else {
+            cb(new Error('Format file tidak didukung. Gunakan file Excel (.xlsx).'));
+        }
+    },
+    limits: { fileSize: 5 * 1024 * 1024 } // max 5MB
+}).single('import_file');
+
+const importExcel = (req, res, next) => {
+    multerImport(req, res, async (err) => {
+        if (err) {
+            return res.render('laporan/import', {
+                title: 'Import Laporan Perjalanan Dinas',
+                error: err.message,
+                success: null
+            });
+        }
+
+        if (!req.file) {
+            return res.render('laporan/import', {
+                title: 'Import Laporan Perjalanan Dinas',
+                error: 'File wajib diupload.',
+                success: null
+            });
+        }
+
+        try {
+            const employeeId = req.session.userId;
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(req.file.buffer);
+
+            const sheet = workbook.getWorksheet(1);
+            const errors = [];
+            let successCount = 0;
+
+            for (let i = 2; i <= sheet.rowCount; i++) {
+                const row = sheet.getRow(i);
+                
+                const raw_request_number = row.getCell(1).value;
+                const report_date = row.getCell(2).value;
+                const raw_summary = row.getCell(3).value;
+
+                // Normalisasi pembacaan teks sel excel
+                const request_number = raw_request_number && typeof raw_request_number === 'object' ? raw_request_number.text : raw_request_number?.toString().trim();
+                const summary = raw_summary?.toString().trim();
+
+                if (!request_number && !summary) continue;
+
+                if (!request_number) {
+                    errors.push(`Baris ${i}: No. Surat wajib diisi.`);
+                    continue;
+                }
+                if (!summary) {
+                    errors.push(`Baris ${i}: Isi laporan wajib diisi.`);
+                    continue;
+                }
+                if (!report_date) {
+                    errors.push(`Baris ${i}: Tanggal laporan wajib diisi.`);
+                    continue;
+                }
+
+                const [travels] = await db.query(`
+                    SELECT ot.id 
+                    FROM official_travel ot
+                    JOIN official_travel_members otm ON ot.id = otm.official_travel_id
+                    WHERE ot.request_number = ? AND otm.employee_id = ? 
+                `, [request_number, employeeId]);
+
+                if (travels.length === 0) {
+                    errors.push(`Baris ${i}: No. Surat "${request_number}" tidak ditemukan atau bukan milik Anda.`);
+                    continue;
+                }
+
+                const travelId = travels[0].id;
+                const reportDateFormatted = new Date(report_date).toISOString().split('T')[0];
+
+                await db.query(`
+                    UPDATE official_travel_members
+                    SET summary = ?, report_date = ?, updated_at = NOW()
+                    WHERE official_travel_id = ? AND employee_id = ?
+                `, [summary, reportDateFormatted, travelId, employeeId]);
+
+                successCount++;
+            }
+
+            return res.render('laporan/import', {
+                title: 'Import Laporan Perjalanan Dinas',
+                error: errors.length > 0 ? errors.join('<br>') : null,
+                success: successCount > 0 ? `${successCount} laporan berhasil diimport.` : null
+            });
+        } catch (err) {
+            next(err);
+        }
+    });
+};
+
+module.exports = { index, createForm, store, editForm, update, uploadAttachment, exportExcel, importForm, importExcel };

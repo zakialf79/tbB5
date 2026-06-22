@@ -6,13 +6,22 @@ var logger = require('morgan');
 var session = require('express-session');
 var MySQLStore = require('express-mysql-session')(session);
 
+var apiRouter = require('./routes/api');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var reimburseRouter = require('./routes/reimburse');
 var laporanRouter = require('./routes/laporan');
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
 
-var app = express();
+var app = express(); // <--- Variabel app dibuat di sini
+
+// ========================================================
+// LOG DETEKTIF DARURAT (Aman di bawah inisialisasi app)
+// ========================================================
+app.use((req, res, next) => {
+    console.log(`\n[DETEKTIF] Ada request masuk -> Method: ${req.method} | URL: ${req.url}`);
+    next();
+});
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -55,6 +64,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/reimburse', reimburseRouter);
 app.use('/laporan', laporanRouter);
+app.use('/api', apiRouter);
 
 // catch 404 and forward to error handler
 app.use(notFoundHandler);

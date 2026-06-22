@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="mb-3">
+      <a href="/pegawai/perjalanan-dinas" class="btn btn-outline-secondary btn-sm">← Kembali</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h4 class="mb-0 fw-bold"><%= title %></h4>
+      </div>
+      <div class="card-body">
+        <% if (error) { %>
+          <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+
+        <form action="<%= mode === 'edit' ? '/pegawai/perjalanan-dinas/edit/' + dinas.id : '/pegawai/perjalanan-dinas/tambah' %>" method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Maksud Perjalanan</label>
+            <textarea name="purpose" class="form-control" rows="3" required><%= dinas.purpose || '' %></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Kota Tujuan</label>
+            <input type="text" name="destination" class="form-control" value="<%= dinas.destination || '' %>" required>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Tanggal Berangkat</label>
+              <input type="date" name="start_date" class="form-control" value="<%= dinas.start_date ? new Date(dinas.start_date).toISOString().slice(0, 10) : '' %>" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-semibold">Tanggal Kembali</label>
+              <input type="date" name="end_date" class="form-control" value="<%= dinas.end_date ? new Date(dinas.end_date).toISOString().slice(0, 10) : '' %>" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary"><%= mode === 'edit' ? 'Simpan Perubahan' : 'Ajukan Permohonan' %></button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

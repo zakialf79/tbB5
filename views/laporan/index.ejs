@@ -35,7 +35,7 @@
         <button type="button" onclick="document.dispatchEvent(new CustomEvent('basecoat:sidebar'))" aria-label="Toggle sidebar" class="btn-sm-icon-ghost mr-2 size-7 -ml-1.5">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
         </button>
-        <span class="font-semibold text-sm">Edit Laporan</span>
+        <span class="font-semibold text-sm">Laporan Perjalanan Dinas</span>
         <div class="ml-auto flex items-center gap-2">
           <span class="text-sm text-muted-foreground">Halo, <%= locals.username || 'Pegawai' %></span>
           <a href="/logout" class="btn-sm-outline">Logout</a>
@@ -43,64 +43,79 @@
       </div>
     </header>
 
-    <div class="p-4 md:p-6 max-w-2xl">
-      <nav class="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-        <a href="/laporan" class="hover:text-foreground">Laporan</a>
-        <span>/</span>
-        <span class="text-foreground">Edit</span>
-      </nav>
+    <div class="p-4 md:p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Daftar Laporan</h1>
+          <p class="text-muted-foreground text-sm mt-1">Total: <%= total %> laporan</p>
+        </div>
+        <a href="/laporan/create" class="btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+          Kirim Laporan
+        </a>
+      </div>
 
-      <% if (error) { %>
-        <div class="alert-destructive mb-4"><p><%= error %></p></div>
+      <form method="GET" action="/laporan" class="flex gap-2 mb-4">
+        <input type="text" name="search" value="<%= search %>" placeholder="Cari berdasarkan tujuan, nomor surat, atau isi laporan..." class="input flex-1" />
+        <button type="submit" class="btn-outline">Cari</button>
+        <% if (search) { %><a href="/laporan" class="btn-ghost">Reset</a><% } %>
+      </form>
+
+      <div class="card p-0 overflow-hidden">
+        <table class="table w-full">
+          <thead>
+            <tr>
+              <th>No. Surat</th>
+              <th>Tujuan</th>
+              <th>Tanggal Perjalanan</th>
+              <th>Tanggal Laporan</th>
+              <th>Lampiran</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (laporans.length === 0) { %>
+              <tr><td colspan="6" class="text-center text-muted-foreground py-8">Belum ada laporan.</td></tr>
+            <% } else { %>
+              <% laporans.forEach(function(l) { %>
+                <tr>
+                  <td class="font-mono text-sm"><%= l.request_number %></td>
+                  <td><%= l.destination %></td>
+                  <td class="text-sm">
+                    <%= new Date(l.start_date).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) %>
+                    –
+                    <%= new Date(l.end_date).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) %>
+                  </td>
+                  <td><%= new Date(l.report_date).toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) %></td>
+                  <td>
+                    <% if (l.attachment) { %>
+                      <a href="/uploads/laporan/<%= l.attachment %>" target="_blank" class="btn-sm-outline">Lihat</a>
+                    <% } else { %>
+                      <span class="text-muted-foreground text-sm">-</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <a href="/laporan/<%= l.id %>/edit" class="btn-sm">Edit</a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if (totalPages > 1) { %>
+        <nav class="flex items-center justify-between mt-4">
+          <p class="text-sm text-muted-foreground">Halaman <%= currentPage %> dari <%= totalPages %></p>
+          <div class="flex gap-1">
+            <% if (currentPage > 1) { %><a href="/laporan?page=<%= currentPage-1 %>&search=<%= search %>" class="btn-sm-outline">← Sebelumnya</a><% } %>
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <a href="/laporan?page=<%= i %>&search=<%= search %>" class="<%= i===currentPage?'btn-sm':'btn-sm-outline' %>"><%= i %></a>
+            <% } %>
+            <% if (currentPage < totalPages) { %><a href="/laporan?page=<%= currentPage+1 %>&search=<%= search %>" class="btn-sm-outline">Selanjutnya →</a><% } %>
+          </div>
+        </nav>
       <% } %>
-
-      <!-- Info batas waktu -->
-      <div class="alert mb-4">
-        <p class="text-sm">
-          Batas waktu edit: <strong><%= deadline.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}) %></strong>
-        </p>
-      </div>
-
-      <div class="card">
-        <header>
-          <h1 class="text-xl font-bold">Edit Laporan Perjalanan Dinas</h1>
-          <p class="text-muted-foreground text-sm"><%= laporan.request_number %> — <%= laporan.destination %></p>
-        </header>
-        <section class="mt-4">
-          <form class="form grid gap-4" action="/laporan/<%= laporan.id %>" method="POST" enctype="multipart/form-data">
-
-            <div class="grid gap-2">
-              <label for="report_date">Tanggal Laporan <span class="text-destructive">*</span></label>
-              <input type="date" name="report_date" id="report_date" class="input w-full"
-                value="<%= laporan.report_date ? new Date(laporan.report_date).toISOString().split('T')[0] : '' %>" required />
-            </div>
-
-            <div class="grid gap-2">
-              <label for="summary">Isi Laporan <span class="text-destructive">*</span></label>
-              <textarea name="summary" id="summary" rows="6"
-                class="input w-full" required><%= laporan.summary %></textarea>
-            </div>
-
-            <div class="grid gap-2">
-              <label for="attachment">Lampiran Baru</label>
-              <% if (laporan.attachment) { %>
-                <p class="text-sm text-muted-foreground">
-                  Lampiran saat ini: <a href="/uploads/laporan/<%= laporan.attachment %>" target="_blank" class="underline">Lihat file</a>
-                </p>
-              <% } %>
-              <input type="file" name="attachment" id="attachment"
-                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="input w-full" />
-              <p class="text-xs text-muted-foreground">Kosongkan jika tidak ingin mengganti lampiran. Maks 5MB.</p>
-            </div>
-
-            <div class="flex gap-2 mt-2">
-              <a href="/laporan" class="btn-outline">Batal</a>
-              <button type="submit" class="btn">Simpan Perubahan</button>
-            </div>
-
-          </form>
-        </section>
-      </div>
     </div>
   </main>
   <script src="/assets/js/basecoat.js" defer></script>

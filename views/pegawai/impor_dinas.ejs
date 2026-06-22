@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="mb-3">
+      <a href="/pegawai/perjalanan-dinas" class="btn btn-outline-secondary btn-sm">← Kembali</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h4 class="mb-0 fw-bold">Impor Data Permohonan Perjalanan Dinas</h4>
+      </div>
+      <div class="card-body">
+        <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+        <% if (sukses) { %><div class="alert alert-success"><%= sukses %></div><% } %>
+
+        <p class="text-muted">Masukkan data dengan format CSV sederhana:</p>
+        <pre class="bg-light border rounded p-3">Maksud Perjalanan,Kota Tujuan,Tanggal Berangkat,Tanggal Kembali
+Rapat koordinasi,Jakarta,2026-07-01,2026-07-03</pre>
+
+        <form action="/pegawai/perjalanan-dinas/impor" method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Data CSV</label>
+            <textarea name="data_csv" class="form-control" rows="8" placeholder="Rapat koordinasi,Jakarta,2026-07-01,2026-07-03"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Impor Data</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
